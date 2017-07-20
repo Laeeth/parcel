@@ -46,7 +46,7 @@ class SegmentProducer(object):
 
     def _setup_pbar(self):
         self.pbar = None
-        self.pbar = get_pbar(self.download.ID, self.download.size)
+        self.pbar = get_pbar(self.download.url, self.download.size)
 
     def _setup_work(self):
         if self.is_complete():
@@ -73,7 +73,7 @@ class SegmentProducer(object):
             return True
         corrupt_segments = 0
         intervals = sorted(self.completed.items())
-        log.info('Checksumming {}:'.format(self.download.ID))
+        log.info('Checksumming {}:'.format(self.download.url))
         pbar = ProgressBar(widgets=[
             Percentage(), ' ',
             Bar(marker='#', left='[', right=']'), ' ', ETA()], fd=sys.stdout)
@@ -130,7 +130,7 @@ class SegmentProducer(object):
             log.warn(STRIP(
                 """State file found at '{}' but no file for {}.
                 Restarting entire download.""".format(
-                    self.download.state_path, self.download.ID)))
+                    self.download.state_path, self.download.url)))
             return
         try:
             with open(self.download.state_path, "rb") as f:

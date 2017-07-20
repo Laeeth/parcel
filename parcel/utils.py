@@ -57,7 +57,6 @@ def print_closing_header(file_id):
     log.debug('^{}^'.format('{s:{c}^{n}}'.format(
         s=' {} '.format(file_id), n=50, c='-')))
 
-
 def write_offset(path, data, offset):
     try:
         f = open(path, 'r+b')

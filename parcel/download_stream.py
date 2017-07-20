@@ -6,6 +6,7 @@ import logging
 from intervaltree import Interval
 import os
 import requests
+import time
 import urlparse
 
 
@@ -13,25 +14,36 @@ class DownloadStream(object):
 
     http_chunk_size = const.HTTP_CHUNK_SIZE
     check_segment_md5sums = True
-    check_file_md5sum = True
 
-    def __init__(self, ID, uri, directory, token=None):
-        self.ID = ID
+    def __init__(self, url, directory, token=None):
         self.initialized = False
         self.is_regular_file = True
-        self.log = logging.getLogger(str(ID))
+        self.log = logging.getLogger(str(url))
         self.name = None
-        self.directory = directory
+        self.directory = self._get_directory_name(directory, url)
         self.size = None
         self.md5sum = None
         self.token = token
-        self.uri = uri
+        self.url = url
+        self.check_file_md5sum = True
 
     def init(self):
         self.get_information()
         self.print_download_information()
         self.initialized = True
         return self
+
+
+    def _get_directory_name(self, directory, url):
+        # get filename/id
+        path = urlparse.urlparse(url).path
+        if ',' not in path:
+            folder = os.path.basename(path)
+        else:
+            # path name is a multi-id dl
+            folder = time.strftime("parcel-%Y%m%d-%H%M%S")
+        return os.path.join(directory, folder)
+
 
     def setup_file(self):
         self.setup_directories()
@@ -103,7 +115,7 @@ class DownloadStream(object):
             header['Range'] = 'bytes={}-{}'.format(start, end)
             # provide host because it's mandatory, range request
             # may not work otherwise
-            scheme, host, path, params, q, frag = urlparse.urlparse(self.uri)
+            scheme, host, path, params, q, frag = urlparse.urlparse(self.url)
             header['host'] = host
         return header
 
@@ -120,22 +132,21 @@ class DownloadStream(object):
         :returns: A `requests` response.
 
         """
-        url = urlparse.urljoin(self.uri, self.ID)
-        self.log.debug('Request to {}'.format(url))
+        self.log.debug('Request to {}'.format(self.url))
 
         # Set urllib3 retries and mount for session
         a = requests.adapters.HTTPAdapter(max_retries=max_retries)
         s = requests.Session()
-        s.mount(urlparse.urlparse(url).scheme, a)
+        s.mount(urlparse.urlparse(self.url).scheme, a)
 
         headers = self.headers() if headers is None else headers
         try:
-            r = s.get(url, headers=headers, verify=verify, stream=True, timeout=max_timeout)
+            r = s.get(self.url, headers=headers, verify=verify, stream=True, timeout=max_timeout)
         except Exception as e:
             raise RuntimeError((
                 "Unable to connect to API: ({}). Is this url correct: '{}'? "
                 "Is there a connection to the API? Is the server running?"
-            ).format(str(e), self.uri))
+            ).format(str(e), self.url))
         try:
             r.raise_for_status()
         except Exception as e:
@@ -155,16 +166,25 @@ class DownloadStream(object):
 
         headers = self.header()
         r = self.request(headers, close=True)
+        self.log.info('Request responded')
+
         content_length = r.headers.get('Content-Length')
         if not content_length:
-            raise ValueError(
-                'Unexpected response from server: missing content length.')
-        self.size = long(content_length)
-        self.log.debug('Request responded   : {} bytes'.format(self.size))
+            self.log.info('Missing content length.')
+            # it also won't come with an md5sum
+            self.check_file_md5sum = False
+        else:
+            self.size = long(content_length)
+            self.log.info('{} bytes'.format(self.size))
+
         attachment = r.headers.get('content-disposition', None)
         self.name = (attachment.split('filename=')[-1]
                      if attachment else 'untitled')
-        self.md5sum = r.headers.get('content-md5')
+
+        self.md5sum = None
+        if self.check_file_md5sum:
+            self.md5sum = r.headers.get('content-md5', '')
+
         return self.name, self.size
 
     def write_segment(self, segment, q_complete, retries=5):
@@ -245,8 +265,12 @@ class DownloadStream(object):
         return written
 
     def print_download_information(self):
-        self.log.info('Starting download   : {}'.format(self.ID))
+        self.log.info('Starting download   : {}'.format(self.url))
         self.log.info('File name           : {}'.format(self.name))
-        self.log.info('Download size       : {} B ({:.2f} GB)'.format(
-            self.size, (self.size / float(const.GB))))
+
+        # some tarfiles will not come with Content-Length in the header
+        if self.size:
+            self.log.info('Download size       : {} B ({:.2f} GB)'.format(
+                self.size, (self.size / float(const.GB))))
+
         self.log.info('Downloading file to : {}'.format(self.path))

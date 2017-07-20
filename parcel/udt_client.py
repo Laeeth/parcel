@@ -10,16 +10,13 @@ log = logging.getLogger('client')
 
 class UDTClient(Client):
 
-    def __init__(self, proxy_host, proxy_port, remote_uri,
+    def __init__(self, proxy_host, proxy_port, verify=True,
                  external_proxy=False, *args, **kwargs):
-        if not remote_uri.startswith('http'):
-            remote_uri = 'https://{}'.format(remote_uri)
         if not external_proxy:
             # Create a local UDT proxy that translates TCP to UDT
             self.start_proxy_server(proxy_host, proxy_port, remote_uri)
-        local_uri = self.construct_local_uri(
-            proxy_host, proxy_port, remote_uri)
-        super(UDTClient, self).__init__(local_uri, *args, **kwargs)
+
+        super(UDTClient, self).__init__(*args, **kwargs)
 
     def construct_local_uri(self, proxy_host, proxy_port, remote_uri):
         """Given proxy settings and remote_uri, construct the uri where the

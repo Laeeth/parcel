@@ -7,6 +7,7 @@ from .segment import SegmentProducer
 
 import logging
 import os
+import requests
 import tempfile
 import time
 
@@ -16,12 +17,10 @@ log = logging.getLogger('client')
 
 class Client(object):
 
-    def __init__(self, uri, token, n_procs, directory=None,
+    def __init__(self, token, n_procs, directory=None, verify=True,
                  debug=False, **kwargs):
         """Creates a parcel client object.
 
-        :param str uri:
-            The uri path [scheme://server:port/path] of the remote server
         :param str token:
             The authentication token that will be added to the HTTP
             X-Auth-Token header
@@ -48,20 +47,19 @@ class Client(object):
         self.start = None
         self.stop = None
         self.token = token
-        self.uri = self.fix_uri(uri)
+        self.verify = verify
 
     @staticmethod
-    def fix_uri(uri):
+    def fix_url(url):
         """Fix an improperly formatted url that is missing a scheme
 
         :params str url: The url to be fixed
-        :returns: Fixed url with trailing / and scheme
+        :returns: Fixed url starting with a valid scheme
 
         """
-        uri = uri if uri.endswith('/') else '{}/'.format(uri)
-        if not (uri.startswith('https://') or uri.startswith('http://')):
-            uri = 'https://{}'.format(uri)
-        return uri
+        if not (url.startswith('https://') or url.startswith('http://')):
+            url = 'https://{}'.format(url)
+        return url
 
     @staticmethod
     def raise_for_write_permissions(directory):
@@ -101,6 +99,7 @@ class Client(object):
                 'Download complete: {0:.2f} Gbps average'.format(rate))
 
     def validate_file_md5sum(self, stream):
+
         if not stream.check_file_md5sum:
             log.debug('checksum validation disabled')
             return
@@ -116,7 +115,7 @@ class Client(object):
         if utils.md5sum_whole_file(stream.path) != stream.md5sum:
             raise Exception("File checksum is invalid")
 
-    def download_files(self, file_ids, *args, **kwargs):
+    def download_files(self, urls, *args, **kwargs):
         """Download a list of files.
 
         :params list file_ids:
@@ -124,24 +123,24 @@ class Client(object):
 
         """
 
-        # Short circuit of no ids given
-        if not file_ids:
-            log.warn('No file ids given.')
+        # Short circuit if no urls given
+        if not urls:
+            log.warn('No file urls given.')
             return
 
         self.raise_for_write_permissions(self.directory)
 
         # Log file ids
-        for file_id in file_ids:
-            log.debug('Given file id: {}'.format(file_id))
+        for url in urls:
+            log.debug('Given url: {}'.format(url))
 
         # Download each file
         downloaded, errors = [], {}
-        for file_id in set(file_ids):
+        for url in urls:
+            url = self.fix_url(url)
 
             # Construct download stream
-            directory = os.path.join(self.directory, file_id)
-            stream = DownloadStream(file_id, self.uri, directory, self.token)
+            stream = DownloadStream(url, self.directory, self.token)
 
             # Download file
             try:
@@ -149,32 +148,32 @@ class Client(object):
                 if os.path.isfile(stream.temp_path):
                     utils.remove_partial_extension(stream.temp_path)
                 self.validate_file_md5sum(stream)
-                downloaded.append(file_id)
+                downloaded.append(url)
 
             # Handle file download error, store error to print out later
             except Exception as e:
-                log.error('Unable to download {}: {}'.format(file_id, str(e)))
-                errors[file_id] = str(e)
+                log.error('unable to download {}: {}'.format(url, str(e)))
+                errors[url] = str(e)
                 if self.debug:
                     raise
 
             finally:
-                utils.print_closing_header(file_id)
+                utils.print_closing_header(url)
 
         # Print error messages
         self.print_summary(downloaded, errors)
         for file_id, error in errors.iteritems():
-            print('ERROR: {}: {}'.format(file_id, error))
+            log.info('ERROR: {}: {}'.format(file_id, error))
 
         return downloaded, errors
 
     def print_summary(self, downloaded, errors):
-        print('\nSUMMARY:')
+        log.info('\nSUMMARY:')
         if downloaded:
-            print('{}: {}'.format(
+            log.info('{}: {}'.format(
                 colored('Successfully downloaded', 'green'), len(downloaded)))
         if errors:
-            print('{}: {}'.format(
+            log.info('{}: {}'.format(
                 colored('Failed to download', 'red'), len(errors)))
         print('')
 
@@ -199,9 +198,15 @@ class Client(object):
         """
 
         # Start stream
-        utils.print_opening_header(stream.ID)
+        utils.print_opening_header(stream.url)
         log.debug('Getting file information...')
         stream.init()
+
+        # if there's no size/Content-Length in the http header
+        # then you can't parallel stream it in chunks
+        if not stream.size:
+            # Do a regular TCP download in python
+            return self._standard_tcp_download(stream)
 
         # Create segments producer to stream
         n_procs = 1 if stream.size < .01 * const.GB else nprocs
@@ -231,3 +236,29 @@ class Client(object):
         # Wait for file to finish download
         producer.wait_for_completion()
         self.stop_timer()
+
+
+    def _standard_tcp_download(self, stream):
+        """Backup download method for when you can't
+        stream data from the a source because the
+        http headers did not contain a Content-Length
+
+        """
+
+        try:
+            r = requests.get(stream.url, stream=True, verify=self.verify)
+
+            if r.status_code == 200:
+                stream.setup_directories()
+                with open(stream.path, 'wb') as f:
+                    for chunk in r:
+                        f.write(chunk)
+
+            else:
+                raise Exception('[{}] Unable to download url {}'.format(r.status_code, stream.url))
+
+            r.close()
+
+        except Exception as e:
+            log.error(e)
+            raise Exception('Unable to connect to {}'.format(stream.url))
