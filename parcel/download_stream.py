@@ -166,16 +166,16 @@ class DownloadStream(object):
 
         headers = self.header()
         r = self.request(headers, close=True)
-        self.log.info('Request responded')
+        self.log.debug('Request responded')
 
         content_length = r.headers.get('Content-Length')
         if not content_length:
-            self.log.info('Missing content length.')
+            self.log.debug('Missing content length.')
             # it also won't come with an md5sum
             self.check_file_md5sum = False
         else:
             self.size = long(content_length)
-            self.log.info('{} bytes'.format(self.size))
+            self.log.debug('{} bytes'.format(self.size))
 
         attachment = r.headers.get('content-disposition', None)
         self.name = (attachment.split('filename=')[-1]
@@ -265,12 +265,12 @@ class DownloadStream(object):
         return written
 
     def print_download_information(self):
-        self.log.info('Starting download   : {}'.format(self.url))
-        self.log.info('File name           : {}'.format(self.name))
+        self.log.debug('Starting download   : {}'.format(self.url))
+        self.log.debug('File name           : {}'.format(self.name))
 
         # some tarfiles will not come with Content-Length in the header
         if self.size:
-            self.log.info('Download size       : {} B ({:.2f} GB)'.format(
+            self.log.debug('Download size       : {} B ({:.2f} GB)'.format(
                 self.size, (self.size / float(const.GB))))
 
-        self.log.info('Downloading file to : {}'.format(self.path))
+        self.log.debug('Downloading file to : {}'.format(self.path))

@@ -16,7 +16,7 @@ log = logging.getLogger('utils')
 try:
     requests.packages.urllib3.disable_warnings()
 except Exception as e:
-    log.info('Unable to silence requests warnings: {}'.format(str(e)))
+    log.debug('Unable to silence requests warnings: {}'.format(str(e)))
 
 
 def check_transfer_size(actual, expected):
@@ -37,7 +37,7 @@ def get_pbar(file_id, maxval, start_val=0):
     "param int maxva': The maximumum value of the progress bar
 
     """
-    log.info('Downloading {}:'.format(file_id))
+    log.debug('Downloading {}:'.format(file_id))
     pbar = ProgressBar(widgets=[
         Percentage(), ' ',
         Bar(marker='#', left='[', right=']'), ' ',

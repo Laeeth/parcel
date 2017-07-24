@@ -50,7 +50,7 @@ class SegmentProducer(object):
 
     def _setup_work(self):
         if self.is_complete():
-            log.info('File already complete.')
+            log.debug('File already complete.')
             return
 
         work_size = self.integrate(self.work_pool)
@@ -73,7 +73,7 @@ class SegmentProducer(object):
             return True
         corrupt_segments = 0
         intervals = sorted(self.completed.items())
-        log.info('Checksumming {}:'.format(self.download.url))
+        log.debug('Checksumming {}:'.format(self.download.url))
         pbar = ProgressBar(widgets=[
             Percentage(), ' ',
             Bar(marker='#', left='[', right=']'), ' ', ETA()], fd=sys.stdout)
@@ -122,7 +122,7 @@ class SegmentProducer(object):
 
         # If there is a file at load_path, attempt to remove
         # downloaded sections from work_pool
-        log.info('Found state file {}, attempting to resume download'.format(
+        log.debug('Found state file {}, attempting to resume download'.format(
             self.download.state_path))
 
         if not os.path.isfile(self.download.path) and\

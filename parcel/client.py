@@ -17,7 +17,7 @@ log = logging.getLogger('client')
 
 class Client(object):
 
-    def __init__(self, token, n_procs, directory=None, verify=True,
+    def __init__(self, url, token, n_procs, directory=None, verify=True,
                  debug=False, **kwargs):
         """Creates a parcel client object.
 
@@ -50,7 +50,7 @@ class Client(object):
         self.verify = verify
 
     @staticmethod
-    def fix_url(url):
+    def fix_uri(url):
         """Fix an improperly formatted url that is missing a scheme
 
         :params str url: The url to be fixed
@@ -137,7 +137,7 @@ class Client(object):
         # Download each file
         downloaded, errors = [], {}
         for url in urls:
-            url = self.fix_url(url)
+            url = self.fix_uri(url)
 
             # Construct download stream
             stream = DownloadStream(url, self.directory, self.token)
@@ -161,21 +161,10 @@ class Client(object):
                 utils.print_closing_header(url)
 
         # Print error messages
-        self.print_summary(downloaded, errors)
         for file_id, error in errors.iteritems():
-            log.info('ERROR: {}: {}'.format(file_id, error))
+            log.error('ERROR: {}: {}'.format(file_id, error))
 
         return downloaded, errors
-
-    def print_summary(self, downloaded, errors):
-        log.info('\nSUMMARY:')
-        if downloaded:
-            log.info('{}: {}'.format(
-                colored('Successfully downloaded', 'green'), len(downloaded)))
-        if errors:
-            log.info('{}: {}'.format(
-                colored('Failed to download', 'red'), len(errors)))
-        print('')
 
     def serial_download(self, stream):
         """Download file to directory serially.
