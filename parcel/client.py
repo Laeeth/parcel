@@ -152,7 +152,6 @@ class Client(object):
 
             # Handle file download error, store error to print out later
             except Exception as e:
-                log.error('unable to download {}: {}'.format(url, str(e)))
                 errors[url] = str(e)
                 if self.debug:
                     raise
@@ -161,8 +160,9 @@ class Client(object):
                 utils.print_closing_header(url)
 
         # Print error messages
-        for file_id, error in errors.iteritems():
-            log.error('ERROR: {}: {}'.format(file_id, error))
+        for url, error in errors.iteritems():
+            file_id = url.split('/')[-1]
+            log.error('{}: {}'.format(file_id, error))
 
         return downloaded, errors
 
