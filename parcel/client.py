@@ -58,7 +58,7 @@ class Client(object):
 
         """
         if not (url.startswith('https://') or url.startswith('http://')):
-            url = 'https://{}'.format(url)
+            url = 'https://{0}'.format(url)
         return url
 
     @staticmethod
@@ -132,7 +132,7 @@ class Client(object):
 
         # Log file ids
         for url in urls:
-            log.debug('Given url: {}'.format(url))
+            log.debug('Given url: {0}'.format(url))
 
         # Download each file
         downloaded, errors = [], {}
@@ -162,7 +162,7 @@ class Client(object):
         # Print error messages
         for url, error in errors.iteritems():
             file_id = url.split('/')[-1]
-            log.error('{}: {}'.format(file_id, error))
+            log.error('{0}: {1}'.format(file_id, error))
 
         return downloaded, errors
 
@@ -212,7 +212,7 @@ class Client(object):
                     if self.debug:
                         raise
                     else:
-                        log.error("Download aborted: {}".format(str(e)))
+                        log.error("Download aborted: {0}".format(str(e)))
                         break
 
         # Divide work amongst process pool
@@ -244,10 +244,10 @@ class Client(object):
                         f.write(chunk)
 
             else:
-                raise Exception('[{}] Unable to download url {}'.format(r.status_code, stream.url))
+                raise Exception('[{0}] Unable to download url {1}'.format(r.status_code, stream.url))
 
             r.close()
 
         except Exception as e:
             log.error(e)
-            raise Exception('Unable to connect to {}'.format(stream.url))
+            raise Exception('Unable to connect to {0}'.format(stream.url))

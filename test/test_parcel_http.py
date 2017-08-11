@@ -47,7 +47,7 @@ class TestParcelHTTP(unittest.TestCase):
                 ['parcel', '-v',
                  '-n1',
                  '-d', self.dest_dir,
-                 'http://{}:{}/{}'.format(server_host, server_port, file_id)])
+                 'http://{0}:{1}/{2}'.format(server_host, server_port, file_id)])
             self.validate_file(
                 os.path.join(gettempdir(), file_id),
                 os.path.join(gettempdir(), self.dest_dir, file_id, file_id))
@@ -59,7 +59,7 @@ class TestParcelHTTP(unittest.TestCase):
                 ['parcel', '-v',
                  '-n4',
                  '-d', self.dest_dir,
-                 'http://{}:{}/{}'.format(server_host, server_port, file_id)])
+                 'http://{0}:{1}/{2}'.format(server_host, server_port, file_id)])
             self.validate_file(
                 os.path.join(gettempdir(), file_id),
                 os.path.join(gettempdir(), self.dest_dir, file_id, file_id))

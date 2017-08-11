@@ -19,7 +19,7 @@ except:
 def no_parcel_lib(*args, **kwargs):
     raise NotImplementedError(STRIP("""
         C++ parcel dynamic library failed to load. Either it was not
-        installed to the package directory at '{}', or the parcel udt command is
+        installed to the package directory at '{0}', or the parcel udt command is
         currently not compatible with your machine.
         """.format(PACKAGE_DIR)))
 

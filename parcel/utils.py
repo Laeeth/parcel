@@ -16,7 +16,7 @@ log = logging.getLogger('utils')
 try:
     requests.packages.urllib3.disable_warnings()
 except Exception as e:
-    log.debug('Unable to silence requests warnings: {}'.format(str(e)))
+    log.debug('Unable to silence requests warnings: {0}'.format(str(e)))
 
 
 def check_transfer_size(actual, expected):
@@ -37,7 +37,7 @@ def get_pbar(file_id, maxval, start_val=0):
     "param int maxva': The maximumum value of the progress bar
 
     """
-    log.debug('Downloading {}:'.format(file_id))
+    log.debug('Downloading {0}:'.format(file_id))
     pbar = ProgressBar(widgets=[
         Percentage(), ' ',
         Bar(marker='#', left='[', right=']'), ' ',
@@ -49,13 +49,13 @@ def get_pbar(file_id, maxval, start_val=0):
 
 def print_opening_header(file_id):
     log.debug('')
-    log.debug('v{}v'.format('{s:{c}^{n}}'.format(
-        s=' {} '.format(file_id), n=50, c='-')))
+    log.debug('v{0}v'.format('{s:{c}^{n}}'.format(
+        s=' {0} '.format(file_id), n=50, c='-')))
 
 
 def print_closing_header(file_id):
-    log.debug('^{}^'.format('{s:{c}^{n}}'.format(
-        s=' {} '.format(file_id), n=50, c='-')))
+    log.debug('^{0}^'.format('{s:{c}^{n}}'.format(
+        s=' {0} '.format(file_id), n=50, c='-')))
 
 def write_offset(path, data, offset):
     try:
@@ -64,7 +64,7 @@ def write_offset(path, data, offset):
         f.write(data)
         f.close()
     except Exception as e:
-        raise Exception('Unable to write offset: {}'.format(str(e)))
+        raise Exception('Unable to write offset: {0}'.format(str(e)))
 
 
 def read_offset(path, offset, size):
@@ -75,7 +75,7 @@ def read_offset(path, offset, size):
         f.close()
         return data
     except Exception as e:
-        raise Exception('Unable to read offset: {}'.format(str(e)))
+        raise Exception('Unable to read offset: {0}'.format(str(e)))
 
 
 def set_file_length(path, length):
@@ -88,19 +88,19 @@ def set_file_length(path, length):
         f.truncate()
         f.close()
     except Exception as e:
-        raise Exception('Unable to set file length: {}'.format(str(e)))
+        raise Exception('Unable to set file length: {0}'.format(str(e)))
 
 
 def remove_partial_extension(path):
     try:
         if not path.endswith('.partial'):
             log.warn('No partial extension found')
-            log.warn('Got {}'.format(path))
+            log.warn('Got {0}'.format(path))
             return
-        log.debug('renaming to {}'.format(path.replace('.partial', '')))
+        log.debug('renaming to {0}'.format(path.replace('.partial', '')))
         os.rename(path, path.replace('.partial', ''))
     except Exception as e:
-        raise Exception('Unable to remove partial extension: {}'.format(str(e)))
+        raise Exception('Unable to remove partial extension: {0}'.format(str(e)))
 
 
 def check_file_existence_and_size(path, size):
@@ -127,7 +127,7 @@ def get_file_type(path):
         else:
             return 'unknown'
     except Exception as e:
-        raise RuntimeError('Unable to get file type: {}'.format(str(e)))
+        raise RuntimeError('Unable to get file type: {0}'.format(str(e)))
 
 
 def calculate_segments(start, stop, block):
@@ -159,7 +159,7 @@ def mmap_open(path):
             mm = mmap.mmap(f.fileno(), 0)
             yield mm
     except Exception as e:
-        raise RuntimeError('Unable to get file type: {}'.format(str(e)))
+        raise RuntimeError('Unable to get file type: {0}'.format(str(e)))
 
 
 def STRIP(comment):

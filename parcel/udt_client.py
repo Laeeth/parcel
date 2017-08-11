@@ -25,7 +25,7 @@ class UDTClient(Client):
         """
         p = urlparse.urlparse(remote_uri)
         scheme = p.scheme or 'https'
-        local_uri = '{}://{}:{}{}'.format(
+        local_uri = '{0}://{1}:{2}{3}'.format(
             scheme, proxy_host, proxy_port, p.path)
         return local_uri
 
@@ -36,7 +36,7 @@ class UDTClient(Client):
 
         p = urlparse.urlparse(remote_uri)
         port = p.port or 9000
-        log.info('Binding proxy server {}:{} -> {}:{}'.format(
+        log.info('Binding proxy server {0}:{1} -> {2}:{3}'.format(
             str(proxy_host), str(proxy_port), str(p.hostname), str(port)))
         proxy = lib.tcp2udt_start(
             str(proxy_host), str(proxy_port), str(p.hostname), str(port))
