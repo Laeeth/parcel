@@ -270,7 +270,7 @@ class DownloadStream(object):
 
         # some tarfiles will not come with Content-Length in the header
         if self.size:
-            self.log.debug('Download size       : {0} B ({:.2f} GB)'.format(
+            self.log.debug('Download size       : {0} B ({1:.2f} GB)'.format(
                 self.size, (self.size / float(const.GB))))
 
         self.log.debug('Downloading file to : {0}'.format(self.path))
