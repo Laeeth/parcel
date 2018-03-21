@@ -11,4 +11,5 @@ before_install:
   - sudo apt-get install python-dev
 install:
   - python setup.py install
+  - pip install -r dev-requirements.txt
 script: "nosetests -v"
