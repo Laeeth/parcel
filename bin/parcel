@@ -17,6 +17,7 @@ log = logging.getLogger('parcel_client')
 
 def get_client(args, token, **_kwargs):
     kwargs = dict(
+        url='https://api.gdc.cancer.gov/',
         token=token,
         n_procs=args.n_processes,
         directory=args.dir,
