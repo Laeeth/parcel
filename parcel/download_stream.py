@@ -44,6 +44,15 @@ class DownloadStream(object):
             folder = time.strftime("parcel-%Y%m%d-%H%M%S")
         return os.path.join(directory, folder)
 
+    def _parse_filename(self, filename):
+        """Given an attachment filename, which sometimes is an S3 Key, strip
+        quotation marks and return a "basename" as a filename
+
+        :param str: filename or S3 key
+        :returns: proper filename
+        """
+        name = filename.strip('"').strip("'")
+        return os.path.basename(name)
 
     def setup_file(self):
         self.setup_directories()
@@ -178,8 +187,13 @@ class DownloadStream(object):
             self.log.debug('{0} bytes'.format(self.size))
 
         attachment = r.headers.get('content-disposition', None)
-        self.name = (attachment.split('filename=')[-1]
-                     if attachment else 'untitled')
+        self.log.debug('Attachment:         : {}'.format(attachment))
+
+        # Some of the filenames are set to be equal to an S3 key, which can
+        # contain '/' characters and it breaks saving the file
+        self.name = (
+            self._parse_filename(attachment.split('filename=')[-1])
+            if attachment else 'untitled')
 
         self.md5sum = None
         if self.check_file_md5sum:
