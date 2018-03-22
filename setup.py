@@ -60,12 +60,11 @@ setup(
         'develop': ParcelDevelop,
     },
     install_requires=[
-        'requests==2.5.1',
+        'requests==2.7.0',
         'progressbar==2.3',
-        'Flask==0.10.1',
         'intervaltree==2.0.4',
         'termcolor==1.1.0',
-        'cmd2==0.6.8',
+        # 'cmd2==0.6.8',
     ],
     package_data={
         "parcel": [
