@@ -1,6 +1,6 @@
 from . import utils
 from . import const
-from .defaults import max_timeout
+from .defaults import max_timeout, deprecation_header
 
 import logging
 from intervaltree import Interval
@@ -225,6 +225,9 @@ class DownloadStream(object):
         try:
             # Initialize segment request
             r = self.request(self.header(start, end))
+
+            if r.status_code == 203:
+                self.log.warn(r.headers[deprecation_header])
 
             # Iterate over the data stream
             self.log.debug('Initializing segment: {0}-{1}'.format(start, end))

@@ -6,3 +6,4 @@ proxy_host = 'localhost'
 proxy_port = 9000
 # 60 seconds timeout on the server's response
 max_timeout = 60
+deprecation_header = 'GDC_DEPRECATION_WARNING'
